@@ -102,6 +102,13 @@
 	
 	}
 	
+	/*
+	
+		See Freshbooks API docs here for paths: https://www.freshbooks.com/api/start
+		
+		Currently only does GETs
+	*/
+	
 	function placeFreshbooksCall($bearerToken, $path) {
 		$curl = curl_init();
 		curl_setopt_array($curl, array(
