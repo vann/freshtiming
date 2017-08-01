@@ -3,7 +3,7 @@
 class Freshbooks {
 	
 	
-	var $clientID = 'c0386f435a5d1b85dca1c34575ef61cf747f3525c690f87156271fd4f4c9b19e';
+	var $clientID = 'd9686b325d7ed398466500618e3e0f5da715d705031fdb14d17f390711683efb';
 	var $redirectURL = 'https://freshtiming.combicombi.com';
 
 	function encodeArrayForPost($fields) {
@@ -39,25 +39,18 @@ class Freshbooks {
 		These tokens should be stored to reauth the user automatically... if we were actually tracking users.
 	*/
 		
-	function oAuthFreshbooks($clientSecret, $sRefreshToken = null) {	
+	function oAuthFreshbooks($config, $sRefreshToken = null) {	
 		$curl = curl_init();
 		
-		if (!$clientSecret)
-			return json_decode(array('err' => "Must pass freshbooks_client_secret (from Freshbooks TimingApp developer page)"));
-
-		$clientID = 'c0386f435a5d1b85dca1c34575ef61cf747f3525c690f87156271fd4f4c9b19e';
-
 
 		$authCode = array_key_exists('code',$_GET) ? $_GET['code'] : null;
-		if ($sRefreshToken && !$authCode) {
+		if ($sRefreshToken && !$authCode) 
 			return json_decode(array('err' => "Did not receive auth code from Freshbooks."));
-		}
 		
 		$fields = array( 
-					'client_secret'	=> $clientSecret
-					, 'client_id'		=> $this->clientID
-					, 'redirect_uri'	=> $this->redirectURL
-
+			'client_secret'	=> $config['freshbooks_app_client_secret']
+			, 'client_id'		=> $config['freshbooks_app_client_id']
+			, 'redirect_uri'	=> $config['freshbooks_app_redirect_url']
 		);
 
 		if ($sRefreshToken ) {
@@ -90,7 +83,7 @@ class Freshbooks {
 		    "Content-Type: application/json"
 		  ));
 
-		//logthis('oAuthFreshbooks():aCurlOpts',$aCurlOpts);
+		//$this->logthis('oAuthFreshbooks():aCurlOpts',$aCurlOpts);
 		
 		curl_setopt_array($curl, $aCurlOpts);
 
@@ -204,44 +197,44 @@ class Freshbooks {
 	function getConfig() {
 	
 		$config = json_decode(file_get_contents("../config.json"), true);
-		//logthis ('config',$config);
+		
+		// vzm: should check against a settable config array:
+		if (!array_key_exists('freshbooks_app_client_secret',$config)) {
+			logthis('err',"Must set freshbooks_app_client_secret (from Freshbooks TimingApp dev page) in config.json");
+			return null;
+		}
+
 		return $config;
 	}
 	
-	function getClientSecret() {
-		
-		$config = $this->getConfig();
-		$freshbooks_client_secret = array_key_exists('freshbooks_client_secret',$config) ? $config['freshbooks_client_secret'] : 'none';
-		$freshbooks_client_secret = isset($_POST['freshbooks_client_secret']) ? $_POST['freshbooks_client_secret'] : $freshbooks_client_secret;
-		return $freshbooks_client_secret;
-	}
+
 	
 	public function entryPoint() {
 	
+		$config = $this->getConfig();
+		
 		if ($_GET) {
-			//logthis("_GET",$_GET);
-			$freshbooks_client_secret = $this->getClientSecret();
-			//logthis( "entryPoint():client secret" , $freshbooks_client_secret);
+			if (!$config) return false;
+
+			$response = $this->oAuthFreshbooks($config);
 			
-			if (!$freshbooks_client_secret) {
-				$this->logthis("entryPoint():No client secret set in 'config.json' file.");
+			//$this->logthis ('entryPoint():response', $response);
+				
+			if (array_key_exists('error',$response)) {
+				$this->logthis ('entryPoint():Got Freshbooks Auth error. $response', $response);
 				return false;
 			}
-			$resp = $this->oAuthFreshbooks($freshbooks_client_secret);
-			if (array_key_exists('error',$resp)) {
-				$this->logthis ('entryPoint():Got Freshbooks Auth error. $response', $resp);
-				return false;
-			}
-			return $this->doFreshbooksScript($resp);
+			return $this->doFreshbooksScript($response);
 		} else {
 			// nothing submitted. show  link to oAuth to freshbooks app:
 			
-
-			echo "<a href='https://my.freshbooks.com/service/auth/oauth/authorize?"
-				. "client_id=" . $this->clientID 
-				. "&response_type=code&"
-				. "redirect_uri=" . $this->redirectURL
-				. "'>oAuth Freshbooks Cloud</a>";
+			$link = "<a href='https://my.freshbooks.com/service/auth/oauth/authorize?";
+			$link .= "client_id=" . $config['freshbooks_app_client_id'];
+			$link .=  "&response_type=code&";
+			$link .= "redirect_uri=" . $config['freshbooks_app_redirect_url'];
+			$link .= "'>oAuth FreshTiming App</a>";
+				
+			echo $link;
 		}
 	}
 }
