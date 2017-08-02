@@ -213,6 +213,14 @@ class Freshbooks {
 	
 		$config = $this->getConfig();
 		
+		$link = "<a href='https://my.freshbooks.com/service/auth/oauth/authorize?";
+		$link .= "client_id=" . $config['freshbooks_app_client_id'];
+		$link .=  "&response_type=code&";
+		$link .= "redirect_uri=" . $config['freshbooks_app_redirect_url'];
+		$link .= "'>oAuth FreshTiming App</a>";
+		
+		echo $link;
+
 		if ($_GET) {
 			if (!$config) return false;
 
@@ -225,16 +233,6 @@ class Freshbooks {
 				return false;
 			}
 			return $this->doFreshbooksScript($response);
-		} else {
-			// nothing submitted. show  link to oAuth to freshbooks app:
-			
-			$link = "<a href='https://my.freshbooks.com/service/auth/oauth/authorize?";
-			$link .= "client_id=" . $config['freshbooks_app_client_id'];
-			$link .=  "&response_type=code&";
-			$link .= "redirect_uri=" . $config['freshbooks_app_redirect_url'];
-			$link .= "'>oAuth FreshTiming App</a>";
-				
-			echo $link;
 		}
 	}
 }
