@@ -220,6 +220,8 @@ class Freshbooks {
 		$link .= "'>oAuth FreshTiming App</a>";
 		
 		echo $link;
+		
+		$bAuthed = false;
 
 		if ($_GET) {
 			if (!$config) return false;
@@ -232,8 +234,26 @@ class Freshbooks {
 				$this->logthis ('entryPoint():Got Freshbooks Auth error. $response', $response);
 				return false;
 			}
-			return $this->doFreshbooksScript($response);
+			else {
+				$bAuthed = true;
+			}
+			$this->doFreshbooksScript($response);
+		} 
+		
+		if ($bAuthed) {
+		?>	
+		<h3>Upload TimingApp CSV export of tasks</h3>
+		<form enctype="multipart/form-data" id='uploadform'  method="post">
+			<input name="fileToUpload" type="file" />
+			<input type="button" value="Upload" />
+		</form>
+		
+		<progress value = 0 max = 100><strong>Progress bar not supported in your browser</strong></progress>
+		<div id = 'uploadResult'></div>
+		
+		<?php
 		}
+		
 	}
 }
 
@@ -243,17 +263,83 @@ class Freshbooks {
 	<head>
 		<title>FreshTiming</title>
 		<script data-main="app" src="lib/requirejs/require.js"></script>
+		<script src="lib/jquery/dist/jquery.min.js"></script>
+		<style>
+			
+		</style>
 	</head>
 	<body>
 
 		<h2>FreshTiming</h2>
 		<p>Tool to take an export of TimingApp.com tasks and import them into Freshbooks Cloud Accounting. </p>
-		
+		<p>You can manually export tasks to CSV in Timing, or use this <a href = "https://timingapp.com/help/javascript_tasks">task export script</a> (only for TimingApp on macOS, versions > 2.2)</a></p>
 
 		<?php 
 			$fb = new Freshbooks();
 			
 			$fb->entryPoint();
 		?>
+		
+		<script>
+			/* global $ */
+			$(':file').on('change', function(e) {
+				var file = $(this)[0].files[0];
+				//console.log("files is: " + JSON.stringify(file));
+				if (file.size > 100*1024) {
+					alert('max upload size is 100k')
+				}
+				if (file.type != 'text/csv') {
+					alert('file type must be csv')
+				}
+				// Also see .name, .type
+			});
+			
+			$(':button').on('click', function(e) {
+			//	console.log('got click.');
+			    $.ajax({
+			        // Your server script to process the upload
+			        url: 'upload.php',
+			        type: 'POST',
+			
+			        // Form data
+			        data: new FormData($('#uploadform')[0]),
+			        dataType: "json",
+			
+			        // Tell jQuery not to process data or worry about content-type
+			        // You *must* include these options!
+			        cache: false,
+			        contentType: false,
+			        processData: false,
+			        
+			        complete: function(jqXHR, textStatus) {
+			        	var json = JSON.parse(jqXHR.responseText);
+			        	//console.log('Upload result: ' + json);
+			        	if ("message" in json)
+			        		$('#uploadResult').html(json.message);
+			        },
+			
+			        // Custom XMLHttpRequest
+			        xhr: function() {
+			        //	console.log('in xhr');
+			            var myXhr = $.ajaxSettings.xhr();
+			            if (myXhr.upload) {
+			                // For handling the progress of the upload
+			                myXhr.upload.addEventListener('progress', function(e) {
+			                    console.log('in progress listener');
+			                    if (e.lengthComputable) {
+			                        $('progress').attr({
+			                            value: e.loaded,
+			                            max: e.total,
+			                        });
+			                        $('progress strong').html( (e.loaded/e.total) + "%");
+			                    }
+			                } , false);
+			            }
+			            return myXhr;
+			        },
+			    });
+			});
+		
+		</script>
 	</body>
 </html>
