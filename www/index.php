@@ -248,7 +248,7 @@ class Freshbooks {
 			<input type="button" value="Upload" />
 		</form>
 		
-		<progress value = 0 max = 100><strong>Progress bar not supported in your browser</strong></progress>
+		<progress value = 0 max = 100 style = "width:20em;height:2em;"><strong>Progress bar not supported in your browser</strong></progress>
 		<div id = 'uploadResult'></div>
 		
 		<?php
@@ -316,6 +316,10 @@ class Freshbooks {
 			        	//console.log('Upload result: ' + json);
 			        	if ("message" in json)
 			        		$('#uploadResult').html(json.message);
+			        	if (jqXHR.statusCode() == 201) {
+			        		//importTasks('');
+			        		// could make javascript calls to freshbooks? will freshbooks care the IP changed?  
+			        	}
 			        },
 			
 			        // Custom XMLHttpRequest
