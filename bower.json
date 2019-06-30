@@ -1,0 +1,23 @@
+{
+  "name": "freshtiming",
+  "homepage": "https://github.com/vann/freshtiming",
+  "authors": [
+    "vann @ ramnode <vann.miller+ramnode>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.2.1",
+    "requirejs-plugin-bower": "*",
+    "oauth2-client-js": "^0.0.16",
+    "requirejs": "^2.3.4"
+  }
+}
